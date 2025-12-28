@@ -1,0 +1,25 @@
+name: KVM + Docker CI
+
+on: [workflow_dispatch]
+
+jobs:
+  infra:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker container
+        run: docker run --rm alpine echo "Container OK"
+
+      - name: Create KVM VM
+        run: |
+          virt-install \
+            --name testvm \
+            --ram 2048 \
+            --vcpus 2 \
+            --disk size=10 \
+            --cdrom ubuntu-22.04-live-server-amd64.iso \
+            --os-variant ubuntu22.04 \
+            --graphics none \
+            --console pty,target_type=serial
