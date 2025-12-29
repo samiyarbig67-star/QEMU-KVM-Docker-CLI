@@ -1,9 +1,9 @@
 name: Windows 11 Core RDP + NX + Tailscale
 
 on:
-  workflow_dispatch:
+    workflow_dispatch:
 
-  jobs:
+    jobs:
     remote-core:
     runs-on: windows-latest
     timeout-minutes: 0   # اجازه اجرای طولانی
