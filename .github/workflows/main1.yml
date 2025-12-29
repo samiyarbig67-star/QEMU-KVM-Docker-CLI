@@ -42,35 +42,35 @@ jobs:
       # NoMachine (NX Protocol)
       # ===============================
       - name: Install NoMachine (robust)
-    shell: powershell
-    run: |
-     $ErrorActionPreference = "Stop"
+        shell: powershell
+        run: |
+         $ErrorActionPreference = "Stop"
 
-     if (Get-Service -Name nxserver -ErrorAction SilentlyContinue) {
-      Write-Host "NoMachine already installed"
-      exit 0
-     }
+         if (Get-Service -Name nxserver -ErrorAction SilentlyContinue) {
+         Write-Host "NoMachine already installed"
+         exit 0
+         }
 
-     $url = "https://download.nomachine.com/download/8.13/Windows/nomachine_8.13.1_1_x64.exe"
-     $installer = "C:\nomachine-installer.exe"
+         $url = "https://download.nomachine.com/download/8.13/Windows/nomachine_8.13.1_1_x64.exe"
+         $installer = "C:\nomachine-installer.exe"
 
-     Write-Host "Downloading NoMachine..."
-     Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+         Write-Host "Downloading NoMachine..."
+         Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
 
-     if (-not (Test-Path $installer)) {
-      throw "Installer download failed"
-     }
+         if (-not (Test-Path $installer)) {
+         throw "Installer download failed"
+         }
 
-     Write-Host "Installing NoMachine..."
-     Start-Process -FilePath $installer -ArgumentList "/S" -Wait -NoNewWindow
+         Write-Host "Installing NoMachine..."
+         Start-Process -FilePath $installer -ArgumentList "/S" -Wait -NoNewWindow
 
-     Start-Sleep -Seconds 10
+         Start-Sleep -Seconds 10
 
-     if (-not (Get-Service nxserver -ErrorAction SilentlyContinue)) {
-      throw "NoMachine service not found after install"
-     }
+         if (-not (Get-Service nxserver -ErrorAction SilentlyContinue)) {
+         throw "NoMachine service not found after install"
+         }
 
-     Write-Host "NoMachine installed successfully"
+         Write-Host "NoMachine installed successfully"
     
       # ===============================
       # Core RDP Optimization
