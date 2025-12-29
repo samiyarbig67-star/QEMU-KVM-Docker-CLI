@@ -41,20 +41,21 @@ jobs:
       # ===============================
       # NoMachine (NX Protocol)
       # ===============================
-      - name: Install NoMachine
+      - name: Install NoMachine (official installer)
         shell: powershell
         run: |
-          if (-not (Get-Service -Name nxserver -ErrorAction SilentlyContinue)) {
-            winget install -e --id NoMachine.NoMachine --accept-source-agreements --accept-package-agreements
-          }
+         $url = "https://download.nomachine.com/download/8.13/Windows/nomachine_8.13.1_1_x64.exe"
+         $installer = "$env:TEMP\nomachine.exe"
 
-      - name: Ensure NoMachine service running
-        shell: powershell
-        run: |
-          Start-Service nxserver
-          Set-Service nxserver -StartupType Automatic
-          Get-Service nxserver
-
+         Invoke-WebRequest -Uri $url -OutFile $installer
+         Start-Process -FilePath $installer -ArgumentList "/S" -Wait
+         - name: Ensure NoMachine service running
+         shell: powershell
+         run: |
+         Start-Service nxserver
+         Set-Service nxserver -StartupType Automatic
+         Get-Service nxserver
+    
       # ===============================
       # Core RDP Optimization
       # ===============================
