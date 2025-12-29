@@ -8,9 +8,9 @@ on:
        timeout-minutes: 0   # اجازه اجرای طولانی
 
 steps:
-      - name: Show system info
-        shell: powershell
-        run: |
+     - name: Show system info
+       shell: powershell
+       run: |
           systeminfo
           Get-CimInstance Win32_Processor
           Get-CimInstance Win32_ComputerSystem
