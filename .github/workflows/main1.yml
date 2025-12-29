@@ -132,13 +132,14 @@ jobs:
       - name: Enable TLS 1.2
      shell: powershell
       run: |
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    - name: Debug environment
-    shell: powershell
-    run: |
-    whoami
-    hostname
-    Get-ExecutionPolicy -List
-    Get-ChildItem C:\ | Select-Object Name
-    Get-NetFirewallProfile
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    
+      - name: Debug environment
+      shell: powershell
+      run: |
+      whoami
+      hostname
+      Get-ExecutionPolicy -List
+      Get-ChildItem C:\ | Select-Object Name
+      Get-NetFirewallProfile
     
