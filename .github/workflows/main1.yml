@@ -1,0 +1,111 @@
+name: Windows 11 Core RDP + NX + Tailscale
+
+on:
+  workflow_dispatch:
+
+jobs:
+  remote-core:
+    runs-on: windows-self-hosted
+    timeout-minutes: 0   # اجازه اجرای طولانی
+
+    steps:
+      - name: Show system info
+        shell: powershell
+        run: |
+          systeminfo
+          Get-CimInstance Win32_Processor
+          Get-CimInstance Win32_ComputerSystem
+
+      # ===============================
+      # Tailscale (Tunnel)
+      # ===============================
+      - name: Install Tailscale
+        shell: powershell
+        run: |
+          if (-not (Get-Command tailscale -ErrorAction SilentlyContinue)) {
+            winget install -e --id tailscale.tailscale --accept-source-agreements --accept-package-agreements
+          }
+
+      - name: Start Tailscale
+        shell: powershell
+        env:
+          TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
+        run: |
+          tailscale up `
+            --authkey=$env:TAILSCALE_AUTHKEY `
+            --accept-dns=false `
+            --accept-routes
+
+          tailscale ip -4
+
+      # ===============================
+      # NoMachine (NX Protocol)
+      # ===============================
+      - name: Install NoMachine
+        shell: powershell
+        run: |
+          if (-not (Get-Service -Name nxserver -ErrorAction SilentlyContinue)) {
+            winget install -e --id NoMachine.NoMachine --accept-source-agreements --accept-package-agreements
+          }
+
+      - name: Ensure NoMachine service running
+        shell: powershell
+        run: |
+          Start-Service nxserver
+          Set-Service nxserver -StartupType Automatic
+          Get-Service nxserver
+
+      # ===============================
+      # Core RDP Optimization
+      # ===============================
+      - name: Enable RDP and tune core settings
+        shell: powershell
+        run: |
+          # Enable RDP
+          Set-ItemProperty `
+            -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" `
+            -Name "fDenyTSConnections" -Value 0
+
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+          # Core RDP tuning
+          New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Force | Out-Null
+
+          Set-ItemProperty `
+            -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" `
+            -Name "fEnableVirtualizedGraphics" -Type DWord -Value 1
+
+          Set-ItemProperty `
+            -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" `
+            -Name "MaxCompressionLevel" -Type DWord -Value 2
+
+          Set-ItemProperty `
+            -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" `
+            -Name "bEnumerateHWBeforeSW" -Type DWord -Value 1
+
+      # ===============================
+      # CPU / Priority Boost
+      # ===============================
+      - name: Boost RDP & NX process priority
+        shell: powershell
+        run: |
+          Get-Process mstsc -ErrorAction SilentlyContinue | ForEach-Object {
+            $_.PriorityClass = "High"
+          }
+
+          Get-Process nxserver -ErrorAction SilentlyContinue | ForEach-Object {
+            $_.PriorityClass = "High"
+          }
+
+      # ===============================
+      # Status Summary
+      # ===============================
+      - name: Connection info
+        shell: powershell
+        run: |
+          Write-Host "==============================="
+          Write-Host "READY FOR CONNECTION"
+          Write-Host "Protocol : NoMachine (NX)"
+          Write-Host "Tunnel   : Tailscale"
+          Write-Host "RDP      : Enabled (Tuned)"
+          Write-Host "==============================="
