@@ -41,20 +41,36 @@ jobs:
       # ===============================
       # NoMachine (NX Protocol)
       # ===============================
-      - name: Install NoMachine (official installer)
-        shell: powershell
-        run: |
-         $url = "https://download.nomachine.com/download/8.13/Windows/nomachine_8.13.1_1_x64.exe"
-         $installer = "$env:TEMP\nomachine.exe"
+      - name: Install NoMachine (robust)
+  shell: powershell
+    run: |
+    $ErrorActionPreference = "Stop"
 
-         Invoke-WebRequest -Uri $url -OutFile $installer
-         Start-Process -FilePath $installer -ArgumentList "/S" -Wait
-         - name: Ensure NoMachine service running
-         shell: powershell
-         run: |
-         Start-Service nxserver
-         Set-Service nxserver -StartupType Automatic
-         Get-Service nxserver
+    if (Get-Service -Name nxserver -ErrorAction SilentlyContinue) {
+      Write-Host "NoMachine already installed"
+      exit 0
+    }
+
+    $url = "https://download.nomachine.com/download/8.13/Windows/nomachine_8.13.1_1_x64.exe"
+    $installer = "C:\nomachine-installer.exe"
+
+    Write-Host "Downloading NoMachine..."
+    Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+
+    if (-not (Test-Path $installer)) {
+      throw "Installer download failed"
+    }
+
+    Write-Host "Installing NoMachine..."
+    Start-Process -FilePath $installer -ArgumentList "/S" -Wait -NoNewWindow
+
+    Start-Sleep -Seconds 10
+
+    if (-not (Get-Service nxserver -ErrorAction SilentlyContinue)) {
+      throw "NoMachine service not found after install"
+    }
+
+    Write-Host "NoMachine installed successfully"
     
       # ===============================
       # Core RDP Optimization
@@ -110,3 +126,19 @@ jobs:
           Write-Host "Tunnel   : Tailscale"
           Write-Host "RDP      : Enabled (Tuned)"
           Write-Host "==============================="
+      # ===============================
+      # Additional Settings For RDP NoMachine
+      # ===============================
+      - name: Enable TLS 1.2
+  shell: powershell
+    run: |
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    - name: Debug environment
+  shell: powershell
+   run: |
+    whoami
+    hostname
+    Get-ExecutionPolicy -List
+    Get-ChildItem C:\ | Select-Object Name
+    Get-NetFirewallProfile
+    
